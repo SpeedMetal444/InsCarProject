@@ -14,7 +14,7 @@ Requisitos
 
     Python 3.x
     PostgreSQL
-    PyQt5
+    PyQt6
 
 Instalación
 
