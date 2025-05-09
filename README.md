@@ -1,6 +1,4 @@
-InsCar - Gestión de Pacientes
-Descripción
-InsCar es un sistema de gestión de pacientes diseñado para ayudar a los profesionales de la salud a administrar la información de sus pacientes de manera eficiente. El sistema permite buscar, agregar, actualizar y eliminar pacientes, así como renovar sus planes de salud y verificar si están vencidos.
+InsCar es un sistema de gestión de pacientes basado en python diseñado para conectarse a bases de datos en PostgreSQL y sirve para ayudar a los profesionales de la salud a administrar la información de sus pacientes de manera eficiente. El sistema permite buscar, agregar, actualizar y eliminar pacientes, así como renovar sus planes de salud y verificar si están vencidos.
 Características
 
     Buscar pacientes por DNI o nombre y apellido
