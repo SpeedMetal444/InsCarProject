@@ -18,15 +18,14 @@ Requisitos
 
 Instalación
 
-    Clona el repositorio: git clone https://github.com/tu-usuario/InsCar.git
+    Clona el repositorio: git clone https://github.com/SpeedMetal444/InsCarProject
     Instala los requisitos: pip install -r requirements.txt
-    Configura la conexión a la base de datos PostgreSQL en el archivo config/db_config.py
-    Ejecuta el script para crear la base de datos: python create_database.py
     Ejecuta la aplicación: python main.py
 
 Uso
 
-    Abre la aplicación y selecciona la pestaña correspondiente a la acción que deseas realizar.
+    Abre la aplicacion y llena los campos de usuario, contraseña y datos de tu bd
+    Selecciona la pestaña correspondiente a la acción que deseas realizar.
     Sigue las instrucciones en pantalla para completar la acción.
 
 Si deseas contribuir al proyecto, por favor, sigue los siguientes pasos:
