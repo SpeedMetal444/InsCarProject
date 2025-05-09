@@ -1,0 +1,29 @@
+# Python-specific ignores
+__pycache__/
+*.pyc
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+dist/
+build/
+sdist/
+
+# Executables
+*.exe
+*.msi
+
+# Configuration files that might contain sensitive information
+config.ini
+
+# Setup artifacts
+setup/
+
+# IDE specific files
+.idea/
+.vscode/
+
+# OS specific files
+.DS_Store
+Thumbs.db
