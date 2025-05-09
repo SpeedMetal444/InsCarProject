@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 InsCar - Gestión de Pacientes
 Descripción
 InsCar es un sistema de gestión de pacientes diseñado para ayudar a los profesionales de la salud a administrar la información de sus pacientes de manera eficiente. El sistema permite buscar, agregar, actualizar y eliminar pacientes, así como renovar sus planes de salud y verificar si están vencidos.
@@ -39,3 +40,6 @@ Si deseas contribuir al proyecto, por favor, sigue los siguientes pasos:
 
 Licencia
 Este proyecto está bajo la licencia MIT. Ver el archivo LICENSE para más detalles.
+=======
+# InsCarProject
+>>>>>>> e7591435c95778abb2eb5a1f62e28af95d881295
