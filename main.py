@@ -131,19 +131,32 @@ class LoginWindow(QWidget):
         with open(config_file, 'w') as f:
             config.write(f)
 
+
+        def ejecutar_script(nombre_script):
+            directorios = ['./_internal', './']
+            for directorio in directorios:
+                ruta_script = os.path.join(directorio, nombre_script)
+                if os.path.exists(ruta_script):
+                    try:
+                        resultado = subprocess.check_output(['python', ruta_script], stderr=subprocess.STDOUT, text=True)
+                        return resultado.strip()
+                    except subprocess.CalledProcessError as e:
+                        raise Exception(f"Error al ejecutar {nombre_script}: {e.output.strip()}")
+            raise Exception(f"No se encontró el script {nombre_script} en ninguno de los directorios")
+
         if self.check_create_db.isChecked():
             try:
-                resultado = subprocess.check_output(['python', './_internal/create_database.py'], stderr=subprocess.STDOUT, text=True)
-                QMessageBox.information(self, "Base de datos", resultado.strip())
-            except subprocess.CalledProcessError as e:
-                QMessageBox.warning(self, "Error al crear la base de datos", e.output.strip())
+                resultado = ejecutar_script('create_database.py')
+                QMessageBox.information(self, "Base de datos", resultado)
+            except Exception as e:
+                QMessageBox.warning(self, "Error al crear la base de datos", str(e))
 
         if self.check_create_tables.isChecked():
             try:
-                resultado = subprocess.check_output(['python', './_internal/create_tables.py'], stderr=subprocess.STDOUT, text=True)
-                QMessageBox.information(self, "Tabla", resultado.strip())
-            except subprocess.CalledProcessError as e:
-                QMessageBox.warning(self, "Error al crear la tabla", e.output.strip())
+                resultado = ejecutar_script('create_tables.py')
+                QMessageBox.information(self, "Tabla", resultado)
+            except Exception as e:
+                QMessageBox.warning(self, "Error al crear la tabla", str(e))
 
         self.close()
         self.main_window = PacientesApp()
