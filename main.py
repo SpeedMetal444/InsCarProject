@@ -16,6 +16,7 @@ from datetime import date
 import os
 import configparser
 import subprocess
+import psycopg2
 
 if sys.platform == 'win32':
     myappid = 'com.inscar.gestiondepacientes.v1'
@@ -24,49 +25,24 @@ if sys.platform == 'win32':
 class LoginWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.init_ui()
+        self.load_config()
 
+    def init_ui(self):
         self.setWindowTitle("Configuración de la base de datos")
         self.setGeometry(100, 100, 400, 350)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(20, 20, 20, 20)
 
-        label_db_name = QLabel("Nombre de la base de datos:")
-        label_db_name.setFont(QFont("Open Sans", 12))
-        self.entry_db_name = QLineEdit()
-        self.entry_db_name.setFixedHeight(30)
-        self.entry_db_name.setPlaceholderText("Ingrese el nombre de la base de datos")
-        self.entry_db_name.setText("inscar_db")
-
-        label_db_host = QLabel("Host de la base de datos:")
-        label_db_host.setFont(QFont("Open Sans", 12))
-        self.entry_db_host = QLineEdit()
-        self.entry_db_host.setFixedHeight(30)
-        self.entry_db_host.setPlaceholderText("Ingrese el host de la base de datos")
-        self.entry_db_host.setText("localhost")
-
-        label_db_port = QLabel("Puerto de la base de datos:")
-        label_db_port.setFont(QFont("Open Sans", 12))
-        self.entry_db_port = QLineEdit()
-        self.entry_db_port.setFixedHeight(30)
-        self.entry_db_port.setPlaceholderText("Ingrese el puerto de la base de datos")
-        self.entry_db_port.setText("5432")
-
-        label_db_user = QLabel("Usuario de la base de datos:")
-        label_db_user.setFont(QFont("Open Sans", 12))
-        self.entry_db_user = QLineEdit()
-        self.entry_db_user.setFixedHeight(30)
-        self.entry_db_user.setPlaceholderText("Ingrese el usuario de la base de datos")
-
-        label_db_password = QLabel("Contraseña de la base de datos:")
-        label_db_password.setFont(QFont("Open Sans", 12))
-        self.entry_db_password = QLineEdit()
-        self.entry_db_password.setFixedHeight(30)
-        self.entry_db_password.setEchoMode(QLineEdit.EchoMode.Password)
-        self.entry_db_password.setPlaceholderText("Ingrese la contraseña de la base de datos")
+        # Widgets
+        self.entry_db_name = self.create_input(layout, "Nombre de la base de datos:", "inscar_db")
+        self.entry_db_host = self.create_input(layout, "Host de la base de datos:", "localhost")
+        self.entry_db_port = self.create_input(layout, "Puerto de la base de datos:", "5432")
+        self.entry_db_user = self.create_input(layout, "Usuario de la base de datos:")
+        self.entry_db_password = self.create_input(layout, "Contraseña de la base de datos:", echo_mode=QLineEdit.EchoMode.Password)
 
         self.check_save_credentials = QCheckBox("Guardar datos de inicio de sesión")
-
         self.check_create_db = QCheckBox("Crear base de datos")
         self.check_create_tables = QCheckBox("Crear tabla")
 
@@ -74,16 +50,7 @@ class LoginWindow(QWidget):
         button_login.setFixedHeight(30)
         button_login.clicked.connect(self.login)
 
-        layout.addWidget(label_db_name)
-        layout.addWidget(self.entry_db_name)
-        layout.addWidget(label_db_host)
-        layout.addWidget(self.entry_db_host)
-        layout.addWidget(label_db_port)
-        layout.addWidget(self.entry_db_port)
-        layout.addWidget(label_db_user)
-        layout.addWidget(self.entry_db_user)
-        layout.addWidget(label_db_password)
-        layout.addWidget(self.entry_db_password)
+        # Layout
         layout.addWidget(self.check_save_credentials)
         layout.addWidget(self.check_create_db)
         layout.addWidget(self.check_create_tables)
@@ -91,21 +58,57 @@ class LoginWindow(QWidget):
 
         self.setLayout(layout)
 
-        if getattr(sys, 'frozen', False):
-            config_file = os.path.join(os.path.dirname(sys.executable), '_internal', 'config.ini')
-        else:
-            config_file = 'config.ini'
+    def create_input(self, layout, label_text, default_text="", echo_mode=None):
+        label = QLabel(label_text)
+        label.setFont(QFont("Open Sans", 12))
+        entry = QLineEdit()
+        entry.setFixedHeight(30)
+        entry.setText(default_text)
+        if echo_mode:
+            entry.setEchoMode(echo_mode)
+        layout.addWidget(label)
+        layout.addWidget(entry)
+        return entry
 
+    def load_config(self):
+        config_file = 'config.ini'
         if os.path.exists(config_file):
             config = configparser.ConfigParser()
             config.read(config_file)
-            self.entry_db_name.setText(config['database']['database'])
-            self.entry_db_host.setText(config['database']['host'])
-            self.entry_db_port.setText(config['database']['port'])
-            if config['database']['user'] and config['database']['password']:
-                self.entry_db_user.setText(config['database']['user'])
-                self.entry_db_password.setText(config['database']['password'])
-                self.check_save_credentials.setChecked(True)
+            db_config = config['database']
+            self.entry_db_name.setText(db_config.get('database', ""))
+            self.entry_db_host.setText(db_config.get('host', ""))
+            self.entry_db_port.setText(db_config.get('port', ""))
+            self.entry_db_user.setText(db_config.get('user', ""))
+            self.entry_db_password.setText(db_config.get('password', ""))
+            self.check_save_credentials.setChecked(bool(db_config.get('user') and db_config.get('password')))
+
+    def verificar_credenciales(self, db_name, db_user, db_password, db_host, db_port):
+        try:
+            conn = psycopg2.connect(
+                dbname=db_name,
+                user=db_user,
+                password=db_password,
+                host=db_host,
+                port=db_port
+            )
+            conn.close()
+            return True
+        except Exception as e:
+            QMessageBox.warning(self, "Error de conexión", f"No se pudo conectar a la base de datos: {str(e)}")
+            return False
+
+    def ejecutar_script(self, nombre_script):
+        directorios = ['./_internal', './']
+        for directorio in directorios:
+            ruta_script = os.path.join(directorio, nombre_script)
+            if os.path.exists(ruta_script):
+                try:
+                    resultado = subprocess.check_output(['python', ruta_script], stderr=subprocess.STDOUT, text=True)
+                    return resultado.strip()
+                except subprocess.CalledProcessError as e:
+                    raise Exception(f"Error al ejecutar {nombre_script}: {e.output.strip()}")
+        raise Exception(f"No se encontró el script {nombre_script} en ninguno de los directorios")
 
     def login(self):
         db_name = self.entry_db_name.text()
@@ -114,6 +117,27 @@ class LoginWindow(QWidget):
         db_host = self.entry_db_host.text()
         db_port = self.entry_db_port.text()
 
+        # Verificar credenciales antes de proceder
+        if not self.verificar_credenciales(db_name, db_user, db_password, db_host, db_port):
+            return
+
+        # Crear base de datos
+        if self.check_create_db.isChecked():
+            try:
+                resultado = self.ejecutar_script('create_database.py')
+                QMessageBox.information(self, "Base de datos", resultado)
+            except Exception as e:
+                QMessageBox.warning(self, "Error al crear la base de datos", str(e))
+
+        # Crear tablas
+        if self.check_create_tables.isChecked():
+            try:
+                resultado = self.ejecutar_script('create_tables.py')
+                QMessageBox.information(self, "Tabla", resultado)
+            except Exception as e:
+                QMessageBox.warning(self, "Error al crear la tabla", str(e))
+
+        # Guardar configuración
         config = configparser.ConfigParser()
         config['database'] = {
             'database': db_name,
@@ -123,40 +147,8 @@ class LoginWindow(QWidget):
             'port': db_port
         }
 
-        if getattr(sys, 'frozen', False):
-            config_file = os.path.join(os.path.dirname(sys.executable), '_internal', 'config.ini')
-        else:
-            config_file = 'config.ini'
-
-        with open(config_file, 'w') as f:
+        with open('config.ini', 'w') as f:
             config.write(f)
-
-
-        def ejecutar_script(nombre_script):
-            directorios = ['./_internal', './']
-            for directorio in directorios:
-                ruta_script = os.path.join(directorio, nombre_script)
-                if os.path.exists(ruta_script):
-                    try:
-                        resultado = subprocess.check_output(['python', ruta_script], stderr=subprocess.STDOUT, text=True)
-                        return resultado.strip()
-                    except subprocess.CalledProcessError as e:
-                        raise Exception(f"Error al ejecutar {nombre_script}: {e.output.strip()}")
-            raise Exception(f"No se encontró el script {nombre_script} en ninguno de los directorios")
-
-        if self.check_create_db.isChecked():
-            try:
-                resultado = ejecutar_script('create_database.py')
-                QMessageBox.information(self, "Base de datos", resultado)
-            except Exception as e:
-                QMessageBox.warning(self, "Error al crear la base de datos", str(e))
-
-        if self.check_create_tables.isChecked():
-            try:
-                resultado = ejecutar_script('create_tables.py')
-                QMessageBox.information(self, "Tabla", resultado)
-            except Exception as e:
-                QMessageBox.warning(self, "Error al crear la tabla", str(e))
 
         self.close()
         self.main_window = PacientesApp()
