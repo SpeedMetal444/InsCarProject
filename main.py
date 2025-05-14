@@ -38,7 +38,7 @@ class LoginWindow(QWidget):
         # Widgets
         self.entry_db_name = self.create_input(layout, "Nombre de la base de datos:", "inscar_db")
         self.entry_db_host = self.create_input(layout, "Host de la base de datos:", "localhost")
-        self.entry_db_port = self.create_input(layout, "Puerto de la base de datos:", "5432")
+        self.entry_db_port = self.create_input(layout, "Puerto de la base de datos:", "5434")
         self.entry_db_user = self.create_input(layout, "Usuario de la base de datos:")
         self.entry_db_password = self.create_input(layout, "Contraseña de la base de datos:", echo_mode=QLineEdit.EchoMode.Password)
 
@@ -83,19 +83,20 @@ class LoginWindow(QWidget):
             self.entry_db_password.setText(db_config.get('password', ""))
             self.check_save_credentials.setChecked(bool(db_config.get('user') and db_config.get('password')))
 
-    def verificar_credenciales(self, db_name, db_user, db_password, db_host, db_port):
+    def verificar_conexion(self, db_host, db_port, db_user, db_password):
+        print(f"Intentando conectar a {db_host}:{db_port} con usuario {db_user}")
         try:
             conn = psycopg2.connect(
-                dbname=db_name,
-                user=db_user,
-                password=db_password,
                 host=db_host,
-                port=db_port
+                port=db_port,
+                user=db_user,
+                password=db_password
             )
             conn.close()
             return True
-        except Exception as e:
-            QMessageBox.warning(self, "Error de conexión", f"No se pudo conectar a la base de datos: {str(e)}")
+        except psycopg2.OperationalError as e:
+            print(f"Error al conectar a la base de datos")
+            QMessageBox.warning(self, "Error de conexión", "Usuario o contraseña incorrectos")
             return False
 
     def ejecutar_script(self, nombre_script):
@@ -118,7 +119,7 @@ class LoginWindow(QWidget):
         db_port = self.entry_db_port.text()
 
         # Verificar credenciales antes de proceder
-        if not self.verificar_credenciales(db_name, db_user, db_password, db_host, db_port):
+        if not self.verificar_conexion(db_host, db_port, db_user, db_password):
             return
 
         # Crear base de datos
